@@ -12,6 +12,7 @@ import java.util.List;
 public class EmployeeRepository {
 
     private HashOperations hashOperations;//crud hash
+    private ListOperations listOperations;
 
 
 
@@ -19,29 +20,39 @@ public class EmployeeRepository {
     private RedisTemplate redisTemplate;
 
     public EmployeeRepository(RedisTemplate redisTemplate) {
-
-        this.hashOperations = redisTemplate.opsForHash();
+        this.listOperations = redisTemplate.opsForList();
+//        this.hashOperations = redisTemplate.opsForHash();
         this.redisTemplate = redisTemplate;
 
     }
 
     public void saveEmployee(Employee employee){
 
-        hashOperations.put("EMPLOYEE", employee.getId(), employee);
+//        hashOperations.put("EMPLOYEE", employee.getId(), employee);
+        listOperations.rightPush("EMPLOYEE", employee);
     }
     public List<Employee> findAll(){
-
-        return hashOperations.values("EMPLOYEE");
+//        return hashOperations.values("EMPLOYEE");
+        return  listOperations.range("EMPLOYEE ", 0, -1);
     }
     public Employee findById(Integer id){
 
-        return (Employee) hashOperations.get("EMPLOYEE", id);
+//        return (Employee) hashOperations.get("EMPLOYEE", id);
+        List<Employee> employeeList  = findAll();
+        for (Employee employee: employeeList) {
+            if(employee.getId() == id){
+                return employee;
+            }
+        }
+        return null;
     }
 
     public void update(Employee employee){
+//        saveEmployee(employee);
         saveEmployee(employee);
     }
     public void delete(Integer id){
-        hashOperations.delete("EMPLOYEE", id);
+//        hashOperations.delete("EMPLOYEE", id);
+        listOperations.remove("EMPLOYEE", 1,findById(id));
     }
 }
